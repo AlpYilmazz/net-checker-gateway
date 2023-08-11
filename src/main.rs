@@ -1,11 +1,12 @@
 use actix_web::{web, App, HttpServer};
-use health_check::{create_health_monitor, delete_health_monitor, start_stop_health_monitor};
-use info::get_workers;
+use api::{
+    health_monitor::{create_health_monitor, delete_health_monitor, start_stop_health_monitor},
+    info::get_workers,
+};
 use worker_client::WorkerClient;
 
+pub mod api;
 pub mod assign;
-pub mod health_check;
-pub mod info;
 pub mod service;
 pub mod worker_client;
 
