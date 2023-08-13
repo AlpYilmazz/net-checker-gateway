@@ -49,13 +49,19 @@ pub async fn create_health_monitor(
 
     // Message Workers to Create Monitors
     // TODO: await all
+    let monitor_id = ""; // FIXME: USE REAL MONITOR ID
     for (worker_id, (_, timing)) in worker_ids
         .into_iter()
         .zip(request.geo_settings.locations.iter())
     {
         // TODO: use ref instead of clone
         worker_client
-            .create_new_monitor(worker_id, timing.clone(), request.monitor.clone())
+            .create_new_monitor(
+                worker_id,
+                monitor_id,
+                timing.clone(),
+                request.monitor.clone(),
+            )
             .await;
     }
 

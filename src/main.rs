@@ -21,8 +21,8 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Mongo connection failed");
 
-    let worker_connection_string = "pulsar://127.0.0.1:6650";
-    let worker_client = WorkerClient::with_uri_str(worker_connection_string).await;
+    let pulsar_connection_string = "pulsar://127.0.0.1:6650";
+    let worker_client = WorkerClient::with_uri_str(pulsar_connection_string).await;
 
     HttpServer::new(move || {
         App::new()

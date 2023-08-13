@@ -1,5 +1,7 @@
 use commons::{
-    message::{ChangeMonitorStateMessage, CreateMonitorMessage, DeleteMonitorMessage},
+    message::{
+        topic, CreateMonitorMessage, KillMonitorMessage, PauseMonitorMessage, ResumeMonitorMessage,
+    },
     MonitorConfiguration, MonitorTimingSettings,
 };
 use pulsar::{ProducerOptions, Pulsar, TokioExecutor};
@@ -15,9 +17,7 @@ impl WorkerClient {
             .build()
             .await
             .expect("Pulsar could not be created");
-        Self {
-            pulsar,
-        }
+        Self { pulsar }
     }
 
     async fn send_message(&self, topic: &str, message: &str) {
@@ -32,48 +32,53 @@ impl WorkerClient {
                 // schema: todo!(),
                 ..Default::default()
             })
-            .build().await
+            .build()
+            .await
             .unwrap(); // TODO
 
         let _result = producer.send(message).await; // TODO
     }
 
-    fn topic(worker_id: &str) -> String {
-        format!("persistent://public/default/{worker_id}")
-    }
-
     pub async fn create_new_monitor(
         &self,
         worker_id: &str,
+        monitor_id: &str,
         timing: MonitorTimingSettings,
         monitor: MonitorConfiguration,
     ) {
-        let create_message = CreateMonitorMessage { timing, monitor };
+        let create_message = CreateMonitorMessage {
+            monitor_id: monitor_id.to_string(),
+            timing,
+            monitor,
+        };
         let message = serde_json::to_string(&create_message).unwrap();
-        self.send_message(&Self::topic(worker_id), &message).await
+        self.send_message(&topic("create", worker_id), &message)
+            .await
     }
 
-    pub async fn start_monitor(&self, worker_id: &str, monitor_id: &str) {
-        let change_state_message = ChangeMonitorStateMessage::Start {
+    pub async fn pause_monitor(&self, worker_id: &str, monitor_id: &str) {
+        let pause_message = PauseMonitorMessage {
             monitor_id: monitor_id.to_string(),
         };
-        let message = serde_json::to_string(&change_state_message).unwrap();
-        self.send_message(&Self::topic(worker_id), &message).await
+        let message = serde_json::to_string(&pause_message).unwrap();
+        self.send_message(&topic("pause", worker_id), &message)
+            .await
     }
 
-    pub async fn stop_monitor(&self, worker_id: &str, monitor_id: &str) {
-        let change_state_message = ChangeMonitorStateMessage::Stop {
+    pub async fn resume_monitor(&self, worker_id: &str, monitor_id: &str) {
+        let resume_message = ResumeMonitorMessage {
             monitor_id: monitor_id.to_string(),
         };
-        let message = serde_json::to_string(&change_state_message).unwrap();
-        self.send_message(&Self::topic(worker_id), &message).await
+        let message = serde_json::to_string(&resume_message).unwrap();
+        self.send_message(&topic("resume", worker_id), &message)
+            .await
     }
 
-    pub async fn delete_monitor(&self, worker_id: &str, monitor_id: &str) {
-        let delete_message = DeleteMonitorMessage {
+    pub async fn kill_monitor(&self, worker_id: &str, monitor_id: &str) {
+        let delete_message = KillMonitorMessage {
             monitor_id: monitor_id.to_string(),
         };
         let message = serde_json::to_string(&delete_message).unwrap();
-        self.send_message(&Self::topic(worker_id), &message).await
+        self.send_message(&topic("kill", worker_id), &message).await
     }
 }
